@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0"
+		/>
+		<script src="https://cdn.twind.style" crossorigin></script>
+		<style>
+			body {
+				font-family: "GT Walsheim Pro", sans-serif;
+			}
+		</style>
+		<title>Update UI</title>
+	</head>
+	<body class="bg-zinc-900 text-zinc-50 p-8">
+		<h1 class="font-bold text-8xl">Hey there.</h1>
+		<hr class="my-6 opacity-25" />
+
+		<h3 class="text-2xl font-semibold">Update Models</h3>
+		<button
+			class="bg-purple-900 text-purple-200 px-4 py-2 my-4 rounded"
+			id="add-model"
+		>
+			Add Model
+		</button>
+		<div id="models" class="flex flex-row flex-wrap justify-evenly"></div>
+		<hr class="my-6 opacity-25" />
+
+		<h3 class="text-2xl font-semibold">Update Loras</h3>
+		<button
+			class="bg-purple-900 text-purple-200 px-4 py-2 my-4 rounded"
+			id="add-lora"
+		>
+			Add Lora
+		</button>
+		<div id="loras" class="flex flex-row flex-wrap justify-evenly"></div>
+		<hr class="my-6 opacity-25" />
+
+		<h3 class="text-2xl font-semibold">Update Preset Commands</h3>
+		<button
+			class="bg-purple-900 text-purple-200 px-4 py-2 my-4 rounded"
+			id="add-preset-command"
+		>
+			Add Command
+		</button>
+		<div
+			id="preset-commands"
+			class="flex flex-row flex-wrap justify-evenly"
+		></div>
+		<hr class="my-6 opacity-25" />
+
+		<h3 class="text-2xl font-semibold">Update Ngrok Token</h3>
+		<div
+			id="ngrok"
+			class="bg-zinc-800 px-4 py-2 m-2 rounded-full text-xl"
+		></div>
+		<hr class="my-6 opacity-25" />
+
+		<h3 class="text-2xl font-semibold">Update CivitAI Token</h3>
+		<div
+			id="civit"
+			class="bg-zinc-800 px-4 py-2 m-2 rounded-full text-xl"
+		></div>
+
+		<script>
+			async function renderModels() {
+				const modelsReq = await fetch("/list/models");
+				const { models } = await modelsReq.json();
+
+				const addModel = document.querySelector("#add-model");
+				addModel.addEventListener("click", async () => {
+					const updated = models;
+
+					updated.unshift({
+						name: "New Model" + Math.random(),
+						url: "https://civitai.com",
+						on: [],
+						rating: 0,
+					});
+
+					await fetch("/update/models", {
+						method: "POST",
+						body: JSON.stringify({ models: updated }),
+					});
+
+					await renderModels();
+				});
+
+				const modelParent = document.querySelector("#models");
+				modelParent.innerHTML = "";
+
+				for (let model of models) {
+					const modelDiv = document.createElement("div");
+					modelDiv.classList.add([
+						"p-8",
+						"m-2",
+						"rounded-xl",
+						"bg-zinc-800",
+						"w-1/4",
+					]);
+
+					const modelHeading = document.createElement("h4");
+					modelHeading.classList.add(["text-2xl", "font-bold", "pb-4"]);
+					modelHeading.addEventListener("dblclick", async () => {
+						const name = prompt("Enter new name", model.name);
+						if (name) {
+							model.name = name;
+						}
+						await fetch("/update/models", {
+							method: "POST",
+							body: JSON.stringify({ models }),
+						});
+						await renderModels();
+					});
+
+					const modelUrl = document.createElement("a");
+					modelUrl.classList.add(["text-xl", "text-zinc-200", "pb-4"]);
+					modelUrl.addEventListener("dblclick", async () => {
+						const url = prompt("Enter new description", model.url);
+						if (url) {
+							model.url = url;
+						}
+						await fetch("/update/models", {
+							method: "POST",
+							body: JSON.stringify({ models }),
+						});
+						await renderModels();
+					});
+
+					const modelRating = document.createElement("p");
+					modelRating.classList.add(["text-sm", "pb-4", "text-zinc-400"]);
+					modelRating.addEventListener("dblclick", async () => {
+						const rating = prompt("Enter new rating", model.rating);
+						if (rating) {
+							model.rating = rating;
+						}
+						await fetch("/update/models", {
+							method: "POST",
+							body: JSON.stringify({ models }),
+						});
+						await renderModels();
+					});
+
+					const modelOn = document.createElement("div");
+					modelOn.classList.add(["flex", "flex-wrap", "gap-2", "pb-4"]);
+
+					const modelDelete = document.createElement("button");
+					modelDelete.innerHTML = "Delete";
+					modelDelete.classList.add([
+						"ring-2",
+						"ring-red-500",
+						"hover:bg-red-500",
+						"hover:ring-0",
+						"text-white",
+						"px-4",
+						"py-2",
+						"m-4",
+						"rounded",
+					]);
+					modelDelete.addEventListener("click", async () => {
+						const updated = models.filter((m) => m.name !== model.name);
+						await fetch("/update/models", {
+							method: "POST",
+							body: JSON.stringify({ models: updated }),
+						});
+						await renderModels();
+					});
+
+					modelDiv.append(modelHeading);
+					modelDiv.append(modelUrl);
+					modelDiv.append(modelRating);
+					modelDiv.append(modelOn);
+					modelDiv.append(modelDelete);
+
+					modelHeading.innerHTML = model.name;
+					modelUrl.innerHTML = model.url;
+					modelRating.innerHTML = `Rating: ${model.rating}`;
+
+					if (model.on.length === 0) {
+						const modelOnItem = document.createElement("p");
+						modelOnItem.innerHTML = "None";
+						modelOnItem.classList.add([
+							"bg-zinc-700",
+							"text-zinc-200",
+							"px-4",
+							"py-2",
+							"rounded-full",
+						]);
+						modelOn.append(modelOnItem);
+					} else {
+						model.on.forEach((on) => {
+							const modelOnItem = document.createElement("p");
+							modelOnItem.innerHTML = on;
+							modelOnItem.classList.add([
+								"bg-green-900",
+								"text-green-200",
+								"px-4",
+								"py-2",
+								"rounded-full",
+							]);
+
+							modelOn.append(modelOnItem);
+						});
+					}
+
+					modelParent.appendChild(modelDiv);
+				}
+			}
+
+			async function renderLoras() {
+				const lorasReq = await fetch("/list/loras");
+				const { loras } = await lorasReq.json();
+
+				const addLora = document.querySelector("#add-lora");
+				addLora.addEventListener("click", async () => {
+					const updated = loras;
+
+					updated.unshift({
+						name: "New lora" + Math.random(),
+						url: "https://civitai.com",
+						on: [],
+						rating: 0,
+					});
+
+					await fetch("/update/loras", {
+						method: "POST",
+						body: JSON.stringify({ loras: updated }),
+					});
+
+					await renderLoras();
+				});
+
+				const loraParent = document.querySelector("#loras");
+				loraParent.innerHTML = "";
+
+				for (let lora of loras) {
+					const loraDiv = document.createElement("div");
+					loraDiv.classList.add([
+						"p-8",
+						"m-2",
+						"rounded-xl",
+						"bg-zinc-800",
+						"w-1/4",
+					]);
+
+					const loraHeading = document.createElement("h4");
+					loraHeading.classList.add(["text-3xl", "font-bold", "pb-4"]);
+					loraHeading.addEventListener("dblclick", async () => {
+						const name = prompt("Enter new name", lora.name);
+						if (name) {
+							lora.name = name;
+						}
+						await fetch("/update/loras", {
+							method: "POST",
+							body: JSON.stringify({ loras }),
+						});
+						await renderLoras();
+					});
+
+					const loraUrl = document.createElement("a");
+					loraUrl.classList.add(["text-xl", "text-zinc-200", "pb-4"]);
+					loraUrl.addEventListener("dblclick", async () => {
+						const url = prompt("Enter new url", lora.url);
+						if (url) {
+							lora.url = url;
+						}
+						await fetch("/update/loras", {
+							method: "POST",
+							body: JSON.stringify({ loras }),
+						});
+						await renderLoras();
+					});
+
+					const loraRating = document.createElement("p");
+					loraRating.classList.add(["text-sm", "pb-4", "text-zinc-400"]);
+					loraRating.addEventListener("dblclick", async () => {
+						const rating = prompt("Enter new rating", lora.rating);
+						if (rating) {
+							lora.rating = rating;
+						}
+						await fetch("/update/loras", {
+							method: "POST",
+							body: JSON.stringify({ loras }),
+						});
+						await renderLoras();
+					});
+
+					const loraOn = document.createElement("div");
+					loraOn.classList.add(["flex", "flex-wrap", "gap-2", "pb-4"]);
+
+					const loraDelete = document.createElement("button");
+					loraDelete.innerHTML = "Delete";
+					loraDelete.classList.add([
+						"ring-2",
+						"ring-red-500",
+						"hover:bg-red-500",
+						"hover:ring-0",
+						"text-white",
+						"px-4",
+						"py-2",
+						"m-4",
+						"rounded",
+					]);
+					loraDelete.addEventListener("click", async () => {
+						const updated = loras.filter((m) => m.name !== lora.name);
+						await fetch("/update/loras", {
+							method: "POST",
+							body: JSON.stringify({ loras: updated }),
+						});
+						await renderLoras();
+					});
+
+					loraDiv.append(loraHeading);
+					loraDiv.append(loraUrl);
+					loraDiv.append(loraRating);
+					loraDiv.append(loraOn);
+					loraDiv.append(loraDelete);
+
+					loraHeading.innerHTML = lora.name;
+					loraUrl.innerHTML = lora.url;
+					loraRating.innerHTML = `Rating: ${lora.rating}`;
+
+					if (lora.on.length === 0) {
+						const loraOnItem = document.createElement("p");
+						loraOnItem.innerHTML = "None";
+						loraOnItem.classList.add([
+							"bg-zinc-700",
+							"text-zinc-200",
+							"px-4",
+							"py-2",
+							"rounded-full",
+						]);
+						loraOn.append(loraOnItem);
+					} else {
+						lora.on.forEach((on) => {
+							const loraOnItem = document.createElement("p");
+							loraOnItem.innerHTML = on;
+							loraOnItem.classList.add([
+								"bg-green-900",
+								"text-green-200",
+								"px-4",
+								"py-2",
+								"rounded-full",
+							]);
+
+							loraOn.append(loraOnItem);
+						});
+					}
+
+					loraParent.appendChild(loraDiv);
+				}
+			}
+
+			async function renderPresetCommands() {
+				const pcReq = await fetch("/list/presetCommands");
+				const { presetCommands } = await pcReq.json();
+
+				const addPc = document.querySelector("#add-preset-command");
+				addPc.addEventListener("click", async () => {
+					const updated = presetCommands;
+
+					updated.unshift({
+						name: "New prest command" + Math.random(),
+						url: "https://civitai.com",
+						on: [],
+					});
+
+					await fetch("/update/presetCommands", {
+						method: "POST",
+						body: JSON.stringify({ presetCommands: updated }),
+					});
+
+					await renderPresetCommands();
+				});
+
+				const pcParent = document.querySelector("#preset-commands");
+				pcParent.innerHTML = "";
+
+				for (let pc of presetCommands) {
+					const pcDiv = document.createElement("div");
+					pcDiv.classList.add([
+						"p-8",
+						"m-2",
+						"rounded-xl",
+						"bg-zinc-800",
+						"w-1/4",
+					]);
+
+					const pcHeading = document.createElement("h4");
+					pcHeading.classList.add(["text-3xl", "font-bold", "pb-4"]);
+					pcHeading.addEventListener("dblclick", async () => {
+						const name = prompt("Enter new name", pc.name);
+						if (name) {
+							pc.name = name;
+						}
+						await fetch("/update/presetCommands", {
+							method: "POST",
+							body: JSON.stringify({ presetCommands }),
+						});
+						await renderPresetCommands();
+					});
+
+					const pcDesc = document.createElement("p");
+					pcDesc.classList.add(["text-xl", "text-zinc-200", "pb-6"]);
+					pcDesc.addEventListener("dblclick", async () => {
+						const desc = prompt("Enter new desc", pc.desc);
+						if (desc) {
+							pc.desc = desc;
+						}
+						await fetch("/update/presetCommands", {
+							method: "POST",
+							body: JSON.stringify({ presetCommands }),
+						});
+						await renderPresetCommands();
+					});
+
+					const pcOn = document.createElement("div");
+					pcOn.classList.add(["flex", "flex-wrap", "gap-2", "pb-4"]);
+
+					const pcDelete = document.createElement("button");
+					pcDelete.innerHTML = "Delete";
+					pcDelete.classList.add([
+						"ring-2",
+						"ring-red-500",
+						"hover:bg-red-500",
+						"hover:ring-0",
+						"text-white",
+						"px-4",
+						"py-2",
+						"m-4",
+						"rounded",
+					]);
+					pcDelete.addEventListener("click", async () => {
+						const updated = presetCommands.filter(
+							(m) => m.name !== pc.name
+						);
+						await fetch("/update/presetCommands", {
+							method: "POST",
+							body: JSON.stringify({ presetCommands: updated }),
+						});
+						await renderPresetCommands();
+					});
+
+					pcDiv.append(pcHeading);
+					pcDiv.append(pcDesc);
+					pcDiv.append(pcOn);
+					pcDiv.append(pcDelete);
+
+					pcHeading.innerHTML = pc.name;
+					pcDesc.innerHTML = pc.desc;
+
+					if (pc.on.length === 0) {
+						const pcOnItem = document.createElement("p");
+						pcOnItem.innerHTML = "None";
+						pcOnItem.classList.add([
+							"bg-zinc-700",
+							"text-zinc-200",
+							"px-4",
+							"py-2",
+							"rounded-full",
+						]);
+						pcOn.append(pcOnItem);
+					} else {
+						pc.on.forEach((on) => {
+							const pcOnItem = document.createElement("p");
+							pcOnItem.innerHTML = on;
+							pcOnItem.classList.add([
+								"bg-green-900",
+								"text-green-200",
+								"px-4",
+								"py-2",
+								"rounded-full",
+							]);
+
+							pcOn.append(pcOnItem);
+						});
+					}
+
+					pcParent.appendChild(pcDiv);
+				}
+			}
+
+			async function renderNgrok() {
+				const ngrokParent = document.querySelector("#ngrok");
+				ngrokParent.innerHTML = "";
+
+				const ngrokReq = await fetch("/list/ngrok");
+				const { ngrok } = await ngrokReq.json();
+
+				ngrokParent.innerHTML = ngrok;
+				ngrokParent.ondblclick = async () => {
+					const token = prompt("Enter new ngrok:", ngrok);
+					if (token) {
+						await fetch("/update/ngrok", {
+							method: "POST",
+							body: JSON.stringify({ ngrok: token }),
+						});
+					}
+					await renderNgrok();
+				};
+			}
+
+			async function renderCivit() {
+				const civitParent = document.querySelector("#civit");
+				civitParent.innerHTML = "";
+
+				const civitReq = await fetch("/list/civit");
+				const { civit } = await civitReq.json();
+
+				civitParent.innerHTML = civit;
+				civitParent.ondblclick = async () => {
+					const token = prompt("Enter new civit:", civit);
+					if (token) {
+						await fetch("/update/civit", {
+							method: "POST",
+							body: JSON.stringify({ civit: token }),
+						});
+					}
+					await renderCivit();
+				};
+			}
+
+			document.addEventListener("DOMContentLoaded", async () => {
+				await renderModels();
+				await renderLoras();
+				await renderPresetCommands();
+				await renderNgrok();
+				await renderCivit();
+			});
+		</script>
+	</body>
+</html>
