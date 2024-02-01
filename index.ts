@@ -12,7 +12,7 @@ const db = await Deno.openKv();
 if (!(await db.get(["data"])).value) {
 	await db.set(
 		["data", "models"],
-		[{"name":"RMSDXLOrion","url":"https://civitai.com/api/download/models/288024","on":[],"rating":0},{"name":"MagMix","url":"https://civitai.com/api/download/models/306220","on":[],"rating":0}]
+		[{"name":"RMSDXLOrion","url":"https://civitai.com/api/download/models/288024","on":[3],"rating":0},{"name":"MagMix","url":"https://civitai.com/api/download/models/306220","on":[3],"rating":0}]
 	);
 	await db.set(
 		["data", "loras"],
