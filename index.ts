@@ -7,7 +7,7 @@ const version = "0.0.1";
 const db = await Deno.openKv();
 
 // DEV
-db.delete(["data"]);
+// db.delete(["data"]);
 
 if (!(await db.get(["data"])).value) {
 	await db.set(
