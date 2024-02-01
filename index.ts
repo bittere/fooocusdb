@@ -2,7 +2,7 @@ import { router } from "https://deno.land/x/rutt@0.2.0/mod.ts";
 import type { Routes } from "https://deno.land/x/rutt@0.2.0/mod.ts";
 
 const routes: Routes = {};
-const version = "0.0.1";
+const version = "0.0.2";
 
 const db = await Deno.openKv();
 
@@ -12,10 +12,7 @@ const db = await Deno.openKv();
 if (!(await db.get(["data"])).value) {
 	await db.set(
 		["data", "models"],
-		[
-			{ name: "test", url: "test", on: [1, 2, 3, 5], rating: 0 },
-			{ name: "test", url: "test", on: [1, 2, 3, 5], rating: 0 },
-		],
+		[{"name":"RMSDXLOrion","url":"https://civitai.com/api/download/models/288024","on":[],"rating":0},{"name":"PicXReal","url":"https://civitai.com/api/download/models/272376","on":[],"rating":0}]
 	);
 	await db.set(
 		["data", "loras"],
@@ -48,11 +45,12 @@ if (!(await db.get(["data"])).value) {
 	);
 	await db.set(
 		["data", "presetCommands"],
-		[{ name: "test", desc: "test", on: [1, 2, 3, 5] }],
+		[{ name: "webui", desc: `cd /home/studio-lab-user/sagemaker-studiolab-notebooks/Fooocus; sed "s/minimum=0.1, maximum=1.0/minimum=0.0, maximum=1.0/" webui.py -i`, on: [3] }, {name:"preset", desc: `cd /home/studio-lab-user/sagemaker-studiolab-notebooks/Fooocus/presets; sed "s#https://huggingface.co/lllyasviel/fav_models/resolve/main/fav/juggernautXL_v8Rundiffusion.safetensors#https://civitai.com/api/download/models/288024?token=9b4b80f2f77161b8636ace0a06f35a61#" default.json -i
+!sed "s#juggernautXL_v8Rundiffusion.safetensors#RMSDXLOrion.safetensors#" default.json -i`, on: [3] }],
 	);
 
-	await db.set(["data", "ngrok"], "ngroktokenhere");
-	await db.set(["data", "civit"], "civittokenhere");
+	await db.set(["data", "ngrok"], "2biGLq0E2b1dNYNP33kN0IjYYZh_7sV8HTNKuQHnmPnJ3di9K");
+	await db.set(["data", "civit"], "9b4b80f2f77161b8636ace0a06f35a61");
 }
 
 routes["/"] = () => {
